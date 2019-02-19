@@ -2,7 +2,8 @@
 title: "Flight Price Web Scraping"
 author: "Marcus"
 date: "February 14, 2019"
-output: html_document
+output:
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -30,41 +31,34 @@ df <- read.csv("flightdata.csv", stringsAsFactors = TRUE)
 
 head(df)
 ```
-```{r,  message=FALSE, warning=FALSE}
 
-table(df$ScrapeDate, df$Journey)
-
-df <- read.csv("flightdata.csv", stringsAsFactors = TRUE)
-
-head(df)
-```
-First I want to check wihc date the scraping was performed. 
-```{r,  message=FALSE, warning=FALSE}
-ggplot(df, aes(x=ScrapeDate))+
-  stat_count(geom="bar") + 
-  coord_flip()
-
-df <- read.csv("flightdata.csv", stringsAsFactors = TRUE)
-
-head(df)
-```
 As it seems, some days the scraping wasnt done fully. 
 
-```{r,  message=FALSE, warning=FALSE}
+```{r,  echo=FALSE}
 ggplot(df, aes(x=ScrapeDate, y=Journey, color=Origin))+
-  geom_point() 
-  coord_flip()
+  geom_point() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-
-head(df)
 ```
 
 ## Including Plots
 
 You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r, echo=FALSE}
+# 1: check stdeviation per trip
+
+group_by(df, Journey, Origin, TravelDates) %>%
+  summarize(std=sd(price),
+            n=n()) %>%
+  mutate(std_stand = scale(std)) %>%
+  filter(n>=3) %>%
+  ggplot(aes(x=Journey, y=std_stand, color=Origin)) +
+  geom_point(alpha=0.2) +
+  geom_boxplot() +
+  geom_hline(yintercept=0) + 
+  coord_flip(ylim=c(-5,5)) 
+
 ```
 
 Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

@@ -62,34 +62,3 @@ df_lowest <-
 
 # Write prepared dataset 
 write.csv(df_lowest, "flightdata.csv", row.names = FALSE)
-
-
-
-# Check how many datapoints I have
-summary(df_lowest)
-
-
-table(df_lowest$Origin, df_lowest$Destination)
-
-# 1: check stdeviation per trip
-
-group_by(df_lowest, Journey, Origin, TravelDates) %>%
-  summarize(std=sd(price),
-            n=n()) %>%
-  mutate(std_stand = scale(std)) %>%
-  filter(n>=3) %>%
-  ggplot(aes(x=Journey, y=std_stand, color=Origin)) +
-  geom_point(alpha=0.2) +
-  geom_boxplot() +
-  geom_hline(yintercept=0) + 
-  coord_flip(ylim=c(-1,5)) 
-
-# 2: Check stdeviation per 
-
-# First plot
-
-filter(df_lowest, 
-       Origin=="BER" & Destination == "BKK" & DepartureDate=="2019-02-02") %>%
-  ggplot(aes(x=ReturnDate, y=price, fill=ScrapeDate, group=ScrapeDate)) + 
-  geom_col(position="dodge")
-  
