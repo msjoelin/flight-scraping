@@ -57,8 +57,7 @@ df_lowest <-
   select(Journey, Origin, Destination, DepartureDate, ReturnDate, TravelDates, ScrapeDate, price) %>%
   ungroup() %>%
   mutate_if(is.character, as.factor) %>%
-  mutate(price_stand = scale(price),
-         DaysBeforeDeparture=as.numeric(DepartureDate-ScrapeDate))
+  mutate(DaysBeforeDeparture=as.numeric(DepartureDate-ScrapeDate))
 
 # Write prepared dataset 
 write.csv(df_lowest, "flightdata.csv", row.names = FALSE)
