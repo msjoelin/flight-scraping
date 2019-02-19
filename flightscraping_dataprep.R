@@ -2,7 +2,9 @@
 
 ##################################################
 ## Project: Web Scrapings - Data visualization
-## Script purpose: Visualize data  from web scraping
+## Script purpose: Consolidate and prepare data from web scraping csv-files
+## Input: CSV-files in scrapedata-folder
+## Output: 
 ## Date: 2019-01-10
 ## Author: Marcus Sjölin
 ##################################################
@@ -17,14 +19,11 @@ library(dplyr)      # Data cleaning
 
 library(ggplot2)    # Visualization
 
-
-# Set folder and get all csv files 
-foldername<-"/home/marcus/R/flight_scraping/scrapedata/"
-
+# Get all csv files from scrapedata folder
 file.list <- 
-  list.files(path=foldername, pattern='*.csv') 
+  list.files(path="scrapedata/", pattern='*.csv') 
 
-file.list <- unlist(lapply(foldername, paste, file.list, sep=""))
+file.list <- unlist(lapply("scrapedata/", paste, file.list, sep=""))
 
 # Read in all files and combine to df
 df.list <- lapply(file.list, read_csv)

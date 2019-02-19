@@ -1,6 +1,7 @@
 ##################################################
 ## Project: Web Scrapings
 ## Script purpose: Scrape expedia site for flight prices
+## Output: csv-file containing flight prices
 ## Date: 2019-01-10
 ## Author: Marcus Sjölin
 ##################################################

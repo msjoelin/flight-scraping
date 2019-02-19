@@ -18,7 +18,7 @@ I'm a pretty frequent traveller, and this means I have spent some time of search
 
 To take a closer look at this without having to search for flights every day, I wrote an R-script to scrape the web for prices. As some sites are making it hard to scrape the data through an automated script (for example recaptcha), the first step was to identify a site without such issues. After some testing, Expedia turned out to be a good candidate. 
 
-In this text, I will not describe the data collection but only analyzing. 
+In this text, I will not describe the data collection process. You'll find the scripts for 
 
 ### Exploratory Analysis
 
@@ -59,23 +59,23 @@ ggplot(df, aes(x=ScrapeDate, y=Journey, color=Origin))+
 
 ```
 
-The data for 13th and 14th of January has more datapoints than other dates, but otherwise it looks fine. There are some gaps, which has to do with errors when the scraping was performed. I'll remove the data before the 15th of Januray for consistency along all Journeys. 
-In order to compare prices for a given journey and date along the scraping date, a standardized variable `price_std` is created. Standardization means that the variable has mean of 0 and standard deviation of 1. 
+The data for 13th and 14th of January has more datapoints than other dates, but otherwise it looks fine. Some dates are missing as the scraping was not carried out on those dates. Also, there are some gaps in journeys  -the reason is errors during the scraping process. 
+
+For consistency, data before the 15th of January are removed. 
+
+As the prices for `STO-CPH` is by nature much lower than `BER-SIN`, variable with standardized prices `price_std` is created. The standardization is made for each journey / traveldate / scrapingdate, as we want to investigate fluctiations between scrapedates. Standardization means that the variable has mean of 0 and standard deviation of 1, and by doing this, we can compare journeys without using different scales. 
 
 
 ```{r,  message=FALSE, warning=FALSE}
-
-df <- 
-  filter(df, 
-             ScrapeDate>="2019-01-15") %>%
+df <- filter(df, ScrapeDate>="2019-01-15") %>%
   group_by(Journey, Origin, TravelDates) %>%
-  mutate(price_std = scale(price)) # Standardize price per scrapedate
-
-group_by(df, Journey, Origin, TravelDates) %>%
-  summarize(n=n(),
-            mean=mean(price_std), 
+  mutate(price_std = scale(price), # Standardize price per scrapedate
+         n=n())  
+  
+group_by(df, Journey, Origin, TravelDates, n) %>%
+  summarize(mean=mean(price_std), 
             stdev = sd(price_std)) %>%
-  filter(n>1) %>%
+  filter(n>2) %>%
   head(n=10)
 ```
 
@@ -133,4 +133,44 @@ ggplot(aes(x=as.factor(DaysBeforeDeparture), y=price_std, fill=Origin)) +
   
 ```
 
+As for STO-BER, the prices of the reverted journey BER-STO are also considerably pricier closer to departure. The same trend is obvious for BER-CPH. 
 
+Finally, lets break down `BER-STO` and `BER-SIN` on TravelDates and plot the different prices depending on days before departure. 
+The tendency that prices are increasing closer to departure more clearly for `BER-STO` is obvious - red points are much higher than for `BER-SIN`. 
+
+```{r,  message=FALSE, warning=FALSE, echo=FALSE}
+filter(df, DaysBeforeDeparture >= 7 & DaysBeforeDeparture <=13 & Journey=="BER-STO" & n>6) %>%
+ggplot(aes(x=TravelDates, y=price, color=as.factor(DaysBeforeDeparture))) + 
+  geom_jitter(size=3, height=0.5, width=0) +
+  coord_flip() +
+  facet_grid(~Journey) + 
+  scale_color_brewer(palette = "RdYlGn") + 
+  guides(color=guide_legend(title="DaysBeforeDeparture")) 
+
+filter(df, DaysBeforeDeparture >= 7 & DaysBeforeDeparture <=13 & Journey=="BER-SIN" & n>6) %>%
+ggplot(aes(x=TravelDates, y=price, color=as.factor(DaysBeforeDeparture))) + 
+  geom_jitter(size=3, height=0.5, width=0) +
+  coord_flip() +
+  facet_grid(~Journey) + 
+  scale_color_brewer(palette = "RdYlGn") + 
+  guides(color=guide_legend(title="DaysBeforeDeparture")) 
+
+  
+```
+
+To wrap it up, the analysis is summarized in the heatmap below. Red values indicate higher prices.  
+
+```{r,  message=FALSE, warning=FALSE, echo=FALSE}
+filter(df, DaysBeforeDeparture >= 7 & DaysBeforeDeparture <=13 & n>=4) %>%
+  group_by(Journey, DaysBeforeDeparture) %>%
+  summarize(price_deviation = median(price_std, na.rm=TRUE)) %>%
+  ggplot(aes(x=as.factor(DaysBeforeDeparture), y=Journey, z=price_deviation, label=round(price_deviation,1))) + 
+  geom_tile(aes(fill=price_deviation)) + 
+  geom_text(size=3) +  
+  xlab("Days Before Departure") + ylab("Journey") + 
+  scale_fill_gradient2(low="blue", high="red")
+  
+```
+
+
+The prices for Berlin journeys are really skyrocketing. So next time I'm finding a good Berlin price 10 days ahead of departure, I will book it instantly.
