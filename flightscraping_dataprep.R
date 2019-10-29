@@ -49,14 +49,20 @@ df <- mutate(df,
 
 # Only get lowest prices for each group
 df_lowest <- 
-  group_by(df, Origin, Destination, DepartureDate, ReturnDate, TravelDates, ScrapeDate) %>%
+  group_by(df, airline, Origin, Destination, DepartureDate, ReturnDate, TravelDates, ScrapeDate) %>%
   top_n(n=-1, wt=price) %>%
   distinct() %>%
-  arrange(Journey, DepartureDate, ReturnDate, ScrapeDate) %>%
-  select(Journey, Origin, Destination, DepartureDate, ReturnDate, TravelDates, ScrapeDate, price) %>%
+  arrange(Journey, airline, DepartureDate, ReturnDate, ScrapeDate) %>%
   ungroup() %>%
-  mutate_if(is.character, as.factor) %>%
-  mutate(DaysBeforeDeparture=as.numeric(DepartureDate-ScrapeDate))
+  mutate(DaysBeforeDeparture=as.numeric(DepartureDate-ScrapeDate)) 
 
 # Write prepared dataset 
 write.csv(df_lowest, "flightdata.csv", row.names = FALSE)
+
+# Update file in google drive
+library(googledrive)
+
+# Update matches
+x<- drive_update(file=as_id("12lzKj1t0g1maoO6FwX8c8lmehD95mt-7fb7zJ3VrFiU"),
+                 media="flightdata.csv")
+

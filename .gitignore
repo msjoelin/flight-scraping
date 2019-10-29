@@ -5,3 +5,4 @@
 .flight_price_web_scraping.html
 scrapedata/
 00_archive/
+.httr-oauth

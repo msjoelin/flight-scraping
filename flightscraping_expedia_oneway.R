@@ -1,8 +1,9 @@
 ##################################################
 ## Project: Web Scrapings
 ## Script purpose: Scrape expedia site for flight prices
+## Input: csv-file containing url-text strings
 ## Output: csv-file containing flight prices
-## Date: 2019-01-10
+## Date: 2019-10-29
 ## Author: Marcus Sjölin
 ##################################################
 
@@ -16,20 +17,27 @@ library(stringr)    # Text handling
 library(tidyr)      # Data cleaning
 library(dplyr)      # Data cleaning
 
+# Scraping RSelenium (browsing with automated software) and rvest
+library(RSelenium)
+library(devtools)
+library(rvest) 
+
+
+# INPUT 
 
 # Read in city data
 city_data <- read.csv("city_data.csv", stringsAsFactors = FALSE)
 nbr_cities <- nrow(city_data)
 
 # Set time period for scraping
-start_date <- today() + 7
-end_date <- start_date + 12
-end_date <- start_date + 12
-minstay <- 5
-maxstay <- 7
+start_date <- today() + 5
+end_date <- start_date + 30
 
-maxhop <- "1"
-carrier <- "carrier%3ASK"
+maxhop <- "2"
+carrier <- ""  # Leave empty for all airlines
+# AA = Aegean, SK = Scandinavian Airlines, LH = Lufthansa, AF = Air France
+
+
 
 # Initialize dataframe
 df <- data.frame(airline=character(), 
@@ -42,12 +50,7 @@ df <- data.frame(airline=character(),
                  nbr_trials=numeric()
 )
 
-# Do scraping with RSelenium (browsing with automated software) and rvest
-library(RSelenium)
-library(devtools)
-library(rvest) # Import data from web
-
-# Loop over all ciy co,binations in list
+# Loop over all ciy combinations in list
 for (i in 1:nbr_cities) {
   
   # Start server
@@ -68,31 +71,25 @@ for (i in 1:nbr_cities) {
       # Initialize departure
       departure <- start_date
       
-      # Loop over all dates in interval, considering minimumstay and maximumstay
+      # Loop over all dates in interval, considering carrier  and maxhop
       while (departure <= end_date)
       {
-        return <- departure + minstay
-        
-        while (return <= end_date & return - departure <= maxstay)
-        {
-          print(c(departure, return))
+          print(c(departure))
 
           # Define url
           url <-
             paste0(
-              "https://www.expedia.se/Flights-Search?trip=roundtrip&leg1=from%3A",
+              "https://www.expedia.se/Flights-Search?trip=oneway&leg1=from%3A",
               origin_link,
               "%2Cto%3A",
               destination_link,
               "%2Cdeparture%3A",
               departure,
-              "TANYT&leg2=from%3A",
-              destination_link,
-              "%2Cto%3A",
-              origin_link,
-              "%2Cdeparture%3A",
-              return,
-              "TANYT&passengers=adults%3A1%2Cchildren%3A0%2Cseniors%3A0%2Cinfantinlap%3AY&options=cabinclass%3Aeconomy%2Cmaxhops%3A",
+              "TANYT&passengers=adults%3A1%2Cchildren%3A0%2Cseniors%3A0%2Cinfantinlap%3AY&options=",
+              "carrier%3",
+              carrier,
+              "3%2C",
+              "cabinclass%3Aeconomy%2Cmaxhops%3A",
               maxhop,
               "&mode=search&origref=www.expedia.se"
             )
@@ -100,12 +97,12 @@ for (i in 1:nbr_cities) {
           trials <- 0
           scrapeOK<-FALSE
           
-          while (!scrapeOK & trials<=3) 
+          while (!scrapeOK & trials<=3) # Try the scraping 3 times, if not success, move on
           {
 
-          # Goto url and hold for 5 seconds
+          # Goto url and hold for 15 seconds
           remDr$navigate(url)
-          Sys.sleep(15) # Hold 20 seconds
+          Sys.sleep(15) 
           # Get source code and read html
           page <-
             remDr$getPageSource()
@@ -120,6 +117,19 @@ for (i in 1:nbr_cities) {
             strsplit("\n") %>%
             unlist(use.names = FALSE) %>%
             as.data.frame()
+          
+          # Get airline
+          airline <-
+            text_xml %>%
+            html_nodes('div.secondary-content.overflow-ellipsis.inline-children') %>%
+            html_text() %>%
+            strsplit("\n") %>%
+            unlist(use.names = FALSE) %>%
+            as.data.frame()
+          
+          airline$airline <- str_squish(airline$.)
+          airline <- select(airline, airline) %>% filter(airline!="")
+          
           
           if (nrow(prices)>0) 
             scrapeOK<-TRUE
@@ -138,11 +148,11 @@ for (i in 1:nbr_cities) {
           df_update <-
             data.frame(prices) %>%
             mutate(
-              airline = '',
+              airline = airline$airline,
               Origin = origin,
               Destination = destination,
               DepartureDate = departure,
-              ReturnDate = return,
+              ReturnDate = NA,
               ScrapeDate = today(),
               nbr_trials=trials
             )
@@ -151,11 +161,7 @@ for (i in 1:nbr_cities) {
           df <- rbind(df, df_update)
           rm(df_update)
 
-          # Increment return date by one
-          return <- return + 1
-          
-        }
-        
+        # Next day
         departure <- departure + 1
       }
       
