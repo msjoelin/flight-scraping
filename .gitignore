@@ -3,7 +3,6 @@
 .RData
 .Ruserdata
 .flight_price_web_scraping.html
-scrapedata/
 00_archive/
 .httr-oauth
 .Rproj.user
@@ -14,7 +13,8 @@ scrapedata/
 scrapedata/
 00_archive/
 .httr-oauth
-flight_scraping.Rproj
-main.R
-flightscraping_expedia.R
-flightscraping_dataprep.R
+.flight_scraping.Rproj
+.main.R
+.flightscraping_expedia.R
+.flightscraping_dataprep.R
+.gitignore
