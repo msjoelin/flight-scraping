@@ -8,7 +8,7 @@ Project to scrape web for flight prices and analyze the data.
 city_data.csv
 If you wish to use other destinations, you have to search out and configure the links in the csv files
 2. Set up folder scrapedata (where scrapedata is saved)
-3. Run script flightscraping_expedia.R for scraping data. 
+3. Run script flightscraping_expedia_oneway.R for scraping data. 
 Parameters to be defined:
 start_date: first departure date to scrape
 end_date: last departure date to be scraped

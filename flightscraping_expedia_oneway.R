@@ -7,7 +7,6 @@
 ## Author: Marcus Sjölin
 ##################################################
 
-
 # Load relevant packages 
 
 library(readr)      # Read data in data 
